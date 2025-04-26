@@ -31,6 +31,7 @@ def webhook():
         mode = request.args.get('hub.mode')
 
         if mode and verify_token:
+            print(verify_token, VERIFY_TOKEN)
             if verify_token == VERIFY_TOKEN:
                 print('WEBHOOK_VERIFIED')
                 return challenge, 200
