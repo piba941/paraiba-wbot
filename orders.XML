@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+  <row>
+    <Order_no>1</Order_no>
+    <FirstName>Piyush</FirstName>
+    <LastName>Bafna</LastName>
+    <mobile>8317345090</mobile>
+    <order_details>dasdasdasd</order_details>
+    <Order_status>pending</Order_status>
+  </row>
+  <row>
+    <Order_no>2</Order_no>
+    <FirstName>Kamal</FirstName>
+    <LastName>Bafna</LastName>
+    <mobile>9100446849</mobile>
+    <order_details>kakakakak</order_details>
+    <Order_status>ready</Order_status>
+  </row>
+</root>
