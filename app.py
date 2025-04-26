@@ -8,6 +8,8 @@ app = Flask(__name__)
 # app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+# app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
+app.config['VERIFY_TOKEN'] = os.getenv('VERIFY_TOKEN')
 
 db.init_app(app)
 
@@ -17,37 +19,55 @@ def home():
 
 
 
-@app.route('/webhook', methods=['POST'])
+@app.route('/webhook', methods=['POST', "GET"])
 def webhook():
-    data = request.get_json()
-    print('Received webhook:', data)
 
-    # Extract the message from customer
-    try:
-        message = data['entry'][0]['changes'][0]['value']['messages'][0]
-        customer_number = message['from']  # Phone number of sender
-        text = message['text']['body'].strip()  # Text message they sent
+    VERIFY_TOKEN = app.config['VERIFY_TOKEN']
 
-        # Check if the message starts with 'status '
-        if text.lower().startswith('status'):
-            parts = text.split()
-            if len(parts) >= 2:
-                order_no = parts[1]
+    if request.method == 'GET':
+        # Webhook verification
+        verify_token = request.args.get('hub.verify_token')
+        challenge = request.args.get('hub.challenge')
+        mode = request.args.get('hub.mode')
 
-                # Look up order in database
-                order = Order.query.filter_by(order_no=order_no).first()
-                if order:
-                    response_text = f"Hi {order.cust_first_name}, your order #{order_no} is currently '{order.order_status}'."
-                else:
-                    response_text = f"Sorry, no order found with number {order_no}."
+        if mode and verify_token:
+            if verify_token == VERIFY_TOKEN:
+                print('WEBHOOK_VERIFIED')
+                return challenge, 200
+            else:
+                return 'Verification token mismatch', 403
+        return 'Missing token', 400
 
-                # Now, send a reply to customer
-                send_whatsapp_message(customer_number, response_text)
+    if request.method == 'GET':
+        data = request.get_json()
+        print('Received webhook:', data)
 
-    except Exception as e:
-        print(f"Error handling webhook: {e}")
+        # Extract the message from customer
+        try:
+            message = data['entry'][0]['changes'][0]['value']['messages'][0]
+            customer_number = message['from']  # Phone number of sender
+            text = message['text']['body'].strip()  # Text message they sent
 
-    return jsonify({"status": "received"}), 200
+            # Check if the message starts with 'status '
+            if text.lower().startswith('status'):
+                parts = text.split()
+                if len(parts) >= 2:
+                    order_no = parts[1]
+
+                    # Look up order in database
+                    order = Order.query.filter_by(order_no=order_no).first()
+                    if order:
+                        response_text = f"Hi {order.cust_first_name}, your order #{order_no} is currently '{order.order_status}'."
+                    else:
+                        response_text = f"Sorry, no order found with number {order_no}."
+
+                    # Now, send a reply to customer
+                    send_whatsapp_message(customer_number, response_text)
+
+        except Exception as e:
+            print(f"Error handling webhook: {e}")
+
+        return jsonify({"status": "received"}), 200
 
 def send_whatsapp_message(to_number, message):
     import requests
