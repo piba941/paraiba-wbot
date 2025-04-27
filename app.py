@@ -8,8 +8,8 @@ app = Flask(__name__)
 # app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-# app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 app.config['VERIFY_TOKEN'] = os.getenv('VERIFY_TOKEN')
+app.config['ACCESS_TOKEN'] = os.getenv('ACCESS_TOKEN')
 
 db.init_app(app)
 
@@ -39,7 +39,7 @@ def webhook():
                 return 'Verification token mismatch', 403
         return 'Missing token', 400
 
-    if request.method == 'GET':
+    if request.method == 'POST':
         data = request.get_json()
         print('Received webhook:', data)
 
@@ -69,6 +69,7 @@ def webhook():
             print(f"Error handling webhook: {e}")
 
         return jsonify({"status": "received"}), 200
+
 
 def send_whatsapp_message(to_number, message):
     import requests
